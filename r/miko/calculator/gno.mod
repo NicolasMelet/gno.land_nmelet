@@ -1,1 +1,1 @@
-module gno.land/miko/calculator
+module gno.land/r/miko/calculator
