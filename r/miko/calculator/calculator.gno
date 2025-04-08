@@ -23,6 +23,13 @@ const (
 var (
 	val        float64
 	displayVal string
+
+	operaationMap = map[string]func(left float64, right float64) float64{
+		"+": func(left float64, right float64) float64 { return left + right },
+		"-": func(left float64, right float64) float64 { return left - right },
+		"*": func(left float64, right float64) float64 { return left * right },
+		"/": func(left float64, right float64) float64 { return left / right },
+	}
 )
 
 func init() {
@@ -63,6 +70,9 @@ func evaluateValidity(line string) {
 			isPriorSpecial = true
 			continue
 		}
+		if line[i] < '0' || line[i] > '9' {
+			panic("Invalid character encountered ")
+		}
 		isPriorSpecial = false
 	}
 }
@@ -71,7 +81,7 @@ func searchForPriority(priorityList string, line string) *Node {
 	for i := 0; i < len(priorityList); i++ {
 		idx := strings.Index(line, string(priorityList[i]))
 		if idx != -1 {
-			return &Node{string(line[idx]), createTree(line[:idx]), createTree(line[idx:])}
+			return &Node{string(line[idx]), createTree(line[:idx]), createTree(line[idx+1:])}
 		}
 	}
 	return nil
@@ -91,15 +101,23 @@ func createTree(line string) *Node {
 	return &Node{line, nil, nil}
 }
 
-// func readTree(tree *Node) float64 {
+func readTree(tree *Node) float64 {
+	operation, exists := operaationMap[tree.value]
 
-// }
+	if exists { // check if the current node is an operator
+		return operation(readTree(tree.left), readTree(tree.right))
+	}
+
+	parsedValue, _ := strconv.ParseFloat(tree.value, 64)
+
+	return parsedValue
+}
 
 func ComputeResult() {
 	evaluateValidity(displayVal)
-	// tree := createTree(displayVal)
+	tree := createTree(displayVal)
 
-	val = 0 // work in progress, no computation actually made for now
+	val = readTree(tree)
 	displayVal = strconv.FormatFloat(val, 'g', 6, 64)
 }
 
@@ -128,6 +146,5 @@ Result: ` + displayVal + `
 | ` + ufmt.Sprintf("[1](%s)", txlink.Call("AddToMath", "newEl", "1")) + `| ` + ufmt.Sprintf("[2](%s)", txlink.Call("AddToMath", "newEl", "2")) + `| ` + ufmt.Sprintf("[3](%s)", txlink.Call("AddToMath", "newEl", "3")) + `| ` + ufmt.Sprintf("[*](%s)", txlink.Call("AddToMath", "newEl", "*")) + `|
 | ` + ufmt.Sprintf("[0](%s)", txlink.Call("AddToMath", "newEl", "0")) + `| ` + ufmt.Sprintf("[.](%s)", txlink.Call("AddToMath", "newEl", ".")) + `| ` + ufmt.Sprintf("[=](%s)", txlink.Call("ComputeResult")) + `| ` + ufmt.Sprintf("[/](%s)", txlink.Call("AddToMath", "newEl", "/")) + `|
 `)
-	// ufmt.Sprint("%f", val)
 	return sb.String()
 }
