@@ -23,6 +23,13 @@ const (
 var (
 	val        float64
 	displayVal string
+
+	operaationMap = map[string]func(left float64, right float64) float64{
+		"+": func(left float64, right float64) float64 { return left + right },
+		"-": func(left float64, right float64) float64 { return left - right },
+		"*": func(left float64, right float64) float64 { return left * right },
+		"/": func(left float64, right float64) float64 { return left / right },
+	}
 )
 
 func init() {
@@ -95,22 +102,15 @@ func createTree(line string) *Node {
 }
 
 func readTree(tree *Node) float64 {
-	if tree.value == "+" {
-		return readTree(tree.left) + readTree(tree.right)
+	operation, exists := operaationMap[tree.value]
+
+	if exists { // check if the current node is an operator
+		return operation(readTree(tree.left), readTree(tree.right))
 	}
-	if tree.value == "-" {
-		return readTree(tree.left) - readTree(tree.right)
-	}
-	if tree.value == "*" {
-		return readTree(tree.left) * readTree(tree.right)
-	}
-	if tree.value == "/" {
-		return readTree(tree.left) / readTree(tree.right)
-	}
-	parsedValue, _ := strconv.ParseFloat(tree.value, 64) // work in progress, no computation actually made for now
+
+	parsedValue, _ := strconv.ParseFloat(tree.value, 64)
 
 	return parsedValue
-	// return 0
 }
 
 func ComputeResult() {
@@ -146,6 +146,5 @@ Result: ` + displayVal + `
 | ` + ufmt.Sprintf("[1](%s)", txlink.Call("AddToMath", "newEl", "1")) + `| ` + ufmt.Sprintf("[2](%s)", txlink.Call("AddToMath", "newEl", "2")) + `| ` + ufmt.Sprintf("[3](%s)", txlink.Call("AddToMath", "newEl", "3")) + `| ` + ufmt.Sprintf("[*](%s)", txlink.Call("AddToMath", "newEl", "*")) + `|
 | ` + ufmt.Sprintf("[0](%s)", txlink.Call("AddToMath", "newEl", "0")) + `| ` + ufmt.Sprintf("[.](%s)", txlink.Call("AddToMath", "newEl", ".")) + `| ` + ufmt.Sprintf("[=](%s)", txlink.Call("ComputeResult")) + `| ` + ufmt.Sprintf("[/](%s)", txlink.Call("AddToMath", "newEl", "/")) + `|
 `)
-	// ufmt.Sprint("%f", val)
 	return sb.String()
 }
