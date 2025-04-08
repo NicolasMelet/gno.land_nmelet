@@ -63,6 +63,9 @@ func evaluateValidity(line string) {
 			isPriorSpecial = true
 			continue
 		}
+		if line[i] < '0' || line[i] > '9' {
+			panic("Invalid character encountered ")
+		}
 		isPriorSpecial = false
 	}
 }
@@ -71,7 +74,7 @@ func searchForPriority(priorityList string, line string) *Node {
 	for i := 0; i < len(priorityList); i++ {
 		idx := strings.Index(line, string(priorityList[i]))
 		if idx != -1 {
-			return &Node{string(line[idx]), createTree(line[:idx]), createTree(line[idx:])}
+			return &Node{string(line[idx]), createTree(line[:idx]), createTree(line[idx+1:])}
 		}
 	}
 	return nil
@@ -91,15 +94,30 @@ func createTree(line string) *Node {
 	return &Node{line, nil, nil}
 }
 
-// func readTree(tree *Node) float64 {
+func readTree(tree *Node) float64 {
+	if tree.value == "+" {
+		return readTree(tree.left) + readTree(tree.right)
+	}
+	if tree.value == "-" {
+		return readTree(tree.left) - readTree(tree.right)
+	}
+	if tree.value == "*" {
+		return readTree(tree.left) * readTree(tree.right)
+	}
+	if tree.value == "/" {
+		return readTree(tree.left) / readTree(tree.right)
+	}
+	parsedValue, _ := strconv.ParseFloat(tree.value, 64) // work in progress, no computation actually made for now
 
-// }
+	return parsedValue
+	// return 0
+}
 
 func ComputeResult() {
 	evaluateValidity(displayVal)
-	// tree := createTree(displayVal)
+	tree := createTree(displayVal)
 
-	val = 0 // work in progress, no computation actually made for now
+	val = readTree(tree)
 	displayVal = strconv.FormatFloat(val, 'g', 6, 64)
 }
 
